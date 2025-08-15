@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+<header>
+    <h1>Dashboard de Vendas & Estoque</h1>
+    <div id="status" class="status">Conectando...</div>
+</header>
+
+<main>
+    <section class="cards">
+        <div class="card">
+            <h3>Total de Vendas</h3>
+            <div id="totalVendas" class="metric">--</div>
+        </div>
+        <div class="card">
+            <h3>Última Atualização</h3>
+            <div id="ultimaAtualizacao" class="metric">--</div>
+        </div>
+        <div class="card">
+            <h3>Linhas CSV</h3>
+            <div id="linhasCsv" class="metric">--</div>
+        </div>
+    </section>
+
+    <section class="grid">
+        <div>
+            <h2>Vendas por Produto</h2>
+            <table id="tabelaVendas">
+                <thead><tr><th>Produto</th><th>Vendas</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div>
+            <h2>Estoque por Produto</h2>
+            <table id="tabelaEstoque">
+                <thead><tr><th>Produto</th><th>Estoque</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <small>Atualizado em: <span id="atualizadoEm">--</span></small>
+</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+body { font-family: system-ui, Arial, sans-serif; margin:0; padding:0; background:#0f1115; color:#e6e6e6; }
+header { background:#1c1f26; padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; }
+h1 { margin:0; font-size:1.4rem; }
+.status { font-size:0.85rem; padding:0.3rem 0.6rem; border-radius:4px; background:#444; }
+.status.ok { background:#1e6f3d; }
+.status.err { background:#8b1e2d; }
+main { padding:1.5rem; }
+.cards { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:1.5rem; }
+.card { background:#1c1f26; padding:1rem; border:1px solid #2b2f38; border-radius:8px; }
+.metric { font-size:1.6rem; font-weight:600; margin-top:0.4rem; }
+table { width:100%; border-collapse:collapse; font-size:0.9rem; }
+th,td { padding:0.5rem 0.6rem; border-bottom:1px solid #2b2f38; }
+th { text-align:left; background:#22252d; position:sticky; top:0; }
+tbody tr:hover { background:#262b34; }
+.grid { display:grid; gap:1.5rem; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); }
+footer { padding:0.75rem 1.5rem; background:#1c1f26; color:#aaa; font-size:0.75rem; }
+a { color:#4da3ff; }

@@ -1,0 +1,5 @@
+timestamp,produto,vendas,estoque
+2025-08-15T12:00:00,Produto A,10,90
+2025-08-15T12:05:00,Produto B,5,45
+2025-08-15T12:10:00,Produto A,7,83
+2025-08-15T12:10:00,Produto C,3,30

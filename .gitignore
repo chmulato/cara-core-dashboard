@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Distribuição / build
+build/
+dist/
+*.egg
+*.egg-info/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.code-workspace
+
+# Sistema
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Cache
+.pytest_cache/
+__coverage__/
+coverage.xml
+.mypy_cache/
+
+# Node (se futuramente usar front build)
+node_modules/
