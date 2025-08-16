@@ -2,7 +2,7 @@
 
 Este projeto fornece um exemplo completo de dashboard web em Python (FastAPI) que lê dados de um arquivo CSV exportado do Excel e atualiza a interface em "tempo quase real" usando WebSockets (quando disponível) e fallback por polling.
 
-## 🚀 Início Rápido
+## Início Rápido
 
 ```bash
 # 1. Clone o repositório
@@ -18,48 +18,48 @@ python main.py
 
 Abra http://localhost:8000 no navegador.
 
-## 📊 Funcionalidades
+## Funcionalidades
 
-- ✅ Leitura periódica/reativa de um arquivo CSV (`app/sample_data.csv`)
-- ✅ Detecção de alterações via watchdog (monitor de sistema de arquivos) + checagem de timestamp
-- ✅ API REST (`/api/data`) para obtenção do snapshot atual
-- ✅ Canal WebSocket (`/ws`) para empurrar atualizações aos navegadores conectados
-- ✅ Interface web com gráficos interativos (Chart.js):
+- Leitura periódica/reativa de um arquivo CSV (`app/sample_data.csv`)
+- Detecção de alterações via watchdog (monitor de sistema de arquivos) + checagem de timestamp
+- API REST (`/api/data`) para obtenção do snapshot atual
+- Canal WebSocket (`/ws`) para empurrar atualizações aos navegadores conectados
+- Interface web com gráficos interativos (Chart.js):
   - Métricas principais (vendas totais, última atualização, linhas CSV)
   - Tabelas de vendas e estoque por produto
   - Gráficos de séries temporais de vendas e estoque
   - **Gráfico de pizza** com distribuição de vendas por produto
-- ✅ Scripts utilitários para geração e simulação de dados
-- ✅ Logging estruturado (JSON) com rotação de arquivos
-- ✅ Dockerfile para containerização
-- ✅ Workflow CI (pytest + ruff) via GitHub Actions
+- Scripts utilitários para geração e simulação de dados
+- Logging estruturado (JSON) com rotação de arquivos
+- Dockerfile para containerização
+- Workflow CI (pytest + ruff) via GitHub Actions
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
-├── main.py                 # 🎯 Ponto de entrada principal
-├── app/                    # 📱 Aplicação web
-│   ├── main.py            #    FastAPI app
-│   ├── data_loader.py     #    Gerencia leitura e difusão dos dados
-│   ├── logging_setup.py   #    Configuração de logging
-│   ├── sample_data.csv    #    Dados de exemplo
-│   ├── templates/         #    Templates HTML
+├── main.py                     # Ponto de entrada principal
+├── app/                        # Aplicação web
+│   ├── main.py                #    FastAPI app
+│   ├── data_loader.py         #    Gerencia leitura e difusão dos dados
+│   ├── logging_setup.py       #    Configuração de logging
+│   ├── sample_data.csv        #    Dados de exemplo
+│   ├── templates/             #    Templates HTML
 │   │   └── index.html
-│   └── static/            #    Arquivos estáticos
+│   └── static/                #    Arquivos estáticos
 │       ├── app.js
 │       └── styles.css
-├── src/                    # 🛠️ Scripts utilitários
+├── src/                        # Scripts utilitários
 │   ├── generate_batch_data.py  # Gera massa de dados
 │   ├── update_simulator.py     # Simula atualizações em tempo real
 │   └── quick_demo_data.py      # Dados demo para screenshots
-├── tests/                  # 🧪 Testes automatizados
-├── requirements.txt        # 📦 Dependências
-├── requirements-dev.txt    # 📦 Dependências de desenvolvimento
-├── Dockerfile             # 🐳 Container Docker
-└── README.md              # 📖 Esta documentação
+├── tests/                      # Testes automatizados
+├── requirements.txt            # Dependências
+├── requirements-dev.txt        # Dependências de desenvolvimento
+├── Dockerfile                  # Container Docker
+└── README.md                   # Esta documentação
 ```
 
-## 🔧 Pré‑requisitos
+## Pré‑requisitos
 
 - Python 3.10+
 - PowerShell (instruções Windows) ou bash (Linux/macOS)
@@ -70,7 +70,7 @@ pip install pandas==2.2.2
 ```
 Recomenda-se usar Python 3.12 para obter wheel binário pronto.
 
-## 📋 Instalação
+## Instalação
 
 ### Via Python (Recomendado)
 ```bash
@@ -102,7 +102,7 @@ docker build -t cara-core-dashboard .
 docker run --rm -p 8000:8000 cara-core-dashboard
 ```
 
-## 🖥️ Execução
+## Execução
 
 ### Método 1: Script Principal (Recomendado)
 ```bash
@@ -130,7 +130,7 @@ LOG_LEVEL=DEBUG LOG_FORMAT=plain python main.py
 
 Acesse: http://localhost:8000
 
-## 🔧 Configuração
+## Configuração
 
 ### Variáveis de Ambiente (Logging)
 - `LOG_LEVEL` - Nível de log: DEBUG, INFO (padrão), WARNING, ERROR
@@ -140,7 +140,7 @@ Acesse: http://localhost:8000
 ### Personalização do CSV
 Mantenha cabeçalho com colunas mínimas: `timestamp,produto,vendas,estoque`.
 
-## 🛠️ Scripts Utilitários
+## Scripts Utilitários
 
 ### Gerar Massa de Dados (intervalos fixos)
 ```bash
@@ -164,7 +164,7 @@ Cancelamento: Ctrl+C.
 python src/quick_demo_data.py
 ```
 
-## 🧪 Testes & Qualidade de Código
+## Testes & Qualidade de Código
 
 ```bash
 # Instalar dependências de desenvolvimento
@@ -177,7 +177,7 @@ pytest -q
 ruff check .
 ```
 
-## 🔄 API Endpoints
+## API Endpoints
 
 | Endpoint | Método | Descrição |
 |----------|--------|-----------|
@@ -204,7 +204,7 @@ ruff check .
 }
 ```
 
-## 🐳 Docker
+## Docker
 
 ```bash
 # Build local
@@ -217,14 +217,14 @@ docker run --rm -p 8000:8000 cara-core-dashboard
 docker run --rm -p 8000:8000 -v $(pwd)/data:/app/app cara-core-dashboard
 ```
 
-## 🔄 CI/CD
+## CI/CD
 
 Workflow em `.github/workflows/ci.yml` executa automaticamente:
 - Lint com Ruff
 - Testes com Pytest
 - Em cada push/pull request
 
-## 🚀 Próximos Passos (Sugestões)
+## Próximos Passos (Sugestões)
 
 - [ ] Persistir histórico em banco (SQLite/PostgreSQL)
 - [ ] Adicionar agregações avançadas e dashboards específicos
@@ -236,11 +236,11 @@ Workflow em `.github/workflows/ci.yml` executa automaticamente:
 - [ ] Cache Redis para performance
 - [ ] Websocket com rooms para múltiplos usuários
 
-## 📄 Licença
+## Licença
 
 MIT - ver arquivo `LICENSE`.
 
-## 🤝 Contribuição
+## Contribuição
 
 1. Fork o projeto
 2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
@@ -248,12 +248,12 @@ MIT - ver arquivo `LICENSE`.
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-## 📞 Suporte
+## Suporte
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/chmulato/cara-core-dashboard/issues)
-- 📧 **Email**: [Criar issue no GitHub]
-- 📖 **Documentação**: Este README + comentários no código
+- **Issues**: [GitHub Issues](https://github.com/chmulato/cara-core-dashboard/issues)
+- **Email**: [Criar issue no GitHub]
+- **Documentação**: Este README + comentários no código
 
 ---
 
-⭐ **Se este projeto foi útil, considere dar uma estrela no GitHub!**
+**Se este projeto foi útil, considere dar uma estrela no GitHub!**
