@@ -96,223 +96,280 @@ pip install -r requirements.txt
 python main.py</code></pre>
 
 		<h2>Backend: FastAPI com WebSockets</h2>
-		<pre><code class="language-python">from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
-import pandas as pd
-import json
-from datetime import datetime
+		<pre><code class="language-python">from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import logging
+import asyncio
+from pathlib import Path
+from app.data_loader import DataManager
+from app.logging_setup import configure_logging
 
-app = FastAPI()
+configure_logging()
+logger = logging.getLogger(__name__)
 
-class DataManager:
+BASE_DIR = Path(__file__).resolve().parent
+CSV_PATH = BASE_DIR / 'sample_data.csv'
+
+app = FastAPI(title="Dashboard Vendas & Estoque")
+
+templates = Jinja2Templates(directory=str(BASE_DIR / 'templates'))
+app.mount('/static', StaticFiles(directory=str(BASE_DIR / 'static')), name='static')
+
+data_manager = DataManager(CSV_PATH, refresh_interval=5.0)
+
+class WSConnectionManager:
     def __init__(self):
-        self.data = None
-        self.connections = []
-    
-    def load_data(self, file_path):
-        """Carrega dados do CSV e converte tipos numpy para JSON-safe."""
-        try:
-            df = pd.read_csv(file_path, parse_dates=['timestamp'])
-            self.data = self.make_json_safe(df.to_dict('records'))
-            return True
-        except Exception as e:
-            print(f"Erro ao carregar dados: {e}")
-            return False
-    
-    def make_json_safe(self, data):
-        """Converte tipos numpy/pandas para tipos nativos Python."""
-        if isinstance(data, list):
-            return [self.make_json_safe(item) for item in data]
-        elif isinstance(data, dict):
-            return {k: self.make_json_safe(v) for k, v in data.items()}
-        elif hasattr(data, 'item'):  # numpy types
-            return data.item()
-        return data
-    
-    async def broadcast_update(self, message):
-        """Envia atualizações para todos os clientes conectados."""
-        if self.connections:
-            disconnected = []
-            for websocket in self.connections:
-                try:
-                    await websocket.send_json(message)
-                except:
-                    disconnected.append(websocket)
-            
-            # Remove conexões desconectadas
-            for ws in disconnected:
-                self.connections.remove(ws)
+        self.active: list[WebSocket] = []
+        self._lock = asyncio.Lock()
 
-data_manager = DataManager()
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        async with self._lock:
+            self.active.append(websocket)
+        logger.info("ws_connected", extra={"total_active": len(self.active)})
+        # Envia snapshot inicial
+        await self.send_personal(websocket, data_manager.get_snapshot())
+
+    async def disconnect(self, websocket: WebSocket):
+        async with self._lock:
+            if websocket in self.active:
+                self.active.remove(websocket)
+        logger.info("ws_disconnected", extra={"total_active": len(self.active)})
+
+    async def broadcast(self, data):
+        """Broadcast para todos os clientes conectados."""
+        if not self.active:
+            return
+        
+        dead = []
+        async with self._lock:
+            for ws in self.active:
+                try:
+                    await ws.send_json(data)
+                except:
+                    dead.append(ws)
+        
+        # Remove conexões mortas
+        if dead:
+            async with self._lock:
+                for ws in dead:
+                    if ws in self.active:
+                        self.active.remove(ws)
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    data_manager.connections.append(websocket)
-    
+    await connection_manager.connect(websocket)
     try:
         while True:
+            # Keep-alive: aguarda mensagens do cliente
             await websocket.receive_text()
-    except:
-        data_manager.connections.remove(websocket)
-
-@app.get("/api/data")
-async def get_data():
-    """Retorna dados agregados atuais."""
-    if not data_manager.data:
-        return {"error": "Dados não carregados"}
-    
-    df = pd.DataFrame(data_manager.data)
-    return {
-        "total_vendas": int(df["vendas"].sum()),
-        "vendas_por_produto": df.groupby("produto")["vendas"].sum().to_dict(),
-        "estoque_por_produto": df.groupby("produto")["estoque"].last().to_dict(),
-        "linhas": len(df),
-        "ultimo_timestamp": df["timestamp"].max().isoformat() if not df.empty else None,
-        "atualizado_em": datetime.now().isoformat()
-    }
+    except WebSocketDisconnect:
+        await connection_manager.disconnect(websocket)
 </code></pre>
 
 		<h2>Monitoramento de Arquivo em Tempo Real</h2>
-		<pre><code class="language-python">from watchdog.observers import Observer
+		<pre><code class="language-python">import threading
+import time
+from pathlib import Path
+from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import asyncio
 import logging
 
-class CSVHandler(FileSystemEventHandler):
-    def __init__(self, data_manager, csv_path):
-        self.data_manager = data_manager
-        self.csv_path = csv_path
-        self.logger = logging.getLogger(__name__)
-    
-    def on_modified(self, event):
-        if event.src_path.endswith('.csv'):
-            self.logger.info(f"Arquivo modificado: {event.src_path}")
-            asyncio.create_task(self.process_update())
-    
-    async def process_update(self):
-        """Processa atualização de dados e notifica clientes."""
-        if self.data_manager.load_data(self.csv_path):
-            # Calcula dados agregados
-            data = await get_data()
-            
-            # Envia para todos os clientes conectados
-            await self.data_manager.broadcast_update({
-                "type": "data_update",
-                "data": data,
-                "timestamp": datetime.now().isoformat()
-            })
-            
-            self.logger.info("Dados atualizados e enviados via WebSocket")
+logger = logging.getLogger(__name__)
 
-def setup_file_monitoring(data_manager, csv_path):
-    """Configura monitoramento de arquivo com watchdog."""
-    event_handler = CSVHandler(data_manager, csv_path)
-    observer = Observer()
-    observer.schedule(event_handler, path=str(csv_path.parent), recursive=False)
-    observer.start()
-    return observer
+class CSVChangeHandler(FileSystemEventHandler):
+    def __init__(self, target_path: Path, on_change):
+        super().__init__()
+        self._target = target_path.resolve()
+        self._on_change = on_change
+
+    def on_modified(self, event):
+        try:
+            if Path(event.src_path).resolve() == self._target:
+                logger.debug("Arquivo CSV modificado: %s", event.src_path)
+                self._on_change()
+        except Exception as e:
+            logger.warning("Erro em on_modified: %s", e)
+
+class DataManager:
+    """Gerencia leitura do CSV e mantém snapshot em memória."""
+
+    def __init__(self, csv_path: Path, refresh_interval: float = 5.0):
+        self.csv_path = csv_path
+        self.refresh_interval = refresh_interval
+        self._last_mtime = 0.0
+        self._lock = threading.RLock()
+        self._data = {}
+        self._subscribers = []
+        self._stop_event = threading.Event()
+        self._thread = None
+        self._observer = None
+
+    def start(self):
+        self._load_if_changed(force=True)
+        # Thread de polling (fallback caso watchdog falhe)
+        self._thread = threading.Thread(target=self._poll_loop, daemon=True)
+        self._thread.start()
+        
+        # Watchdog para monitoramento em tempo real
+        if self.csv_path.exists():
+            try:
+                handler = CSVChangeHandler(self.csv_path, self._load_if_changed)
+                self._observer = Observer()
+                self._observer.schedule(handler, str(self.csv_path.parent), recursive=False)
+                self._observer.start()
+                logger.info("Watchdog iniciado para %s", self.csv_path)
+            except Exception as e:
+                # Fallback para polling se watchdog falhar
+                self._observer = None
+                logger.warning("Watchdog desativado, usando apenas polling. Motivo: %s", e)
+
+    def stop(self):
+        self._stop_event.set()
+        if self._observer:
+            self._observer.stop()
+            self._observer.join(timeout=2)
+
+    def subscribe(self, callback):
+        """Adiciona callback para notificações de atualização."""
+        with self._lock:
+            self._subscribers.append(callback)
+
+    def get_snapshot(self):
+        """Retorna snapshot atual dos dados."""
+        with self._lock:
+            return dict(self._data)
+
+    def _poll_loop(self):
+        """Loop de polling como fallback."""
+        while not self._stop_event.is_set():
+            try:
+                self._load_if_changed()
+            except Exception as e:
+                logger.error("Erro no polling: %s", e)
+            time.sleep(self.refresh_interval)
+
+    def _notify(self):
+        """Notifica todos os subscribers sobre mudanças."""
+        snapshot = self.get_snapshot()
+        for callback in list(self._subscribers):
+            try:
+                callback(snapshot)
+            except Exception as e:
+                logger.warning("Subscriber falhou: %s", e)
 </code></pre>		<h2>Frontend: Dashboard Interativo</h2>
-		<pre><code class="language-javascript">class DashboardManager {
-    constructor() {
-        this.ws = null;
-        this.isPolling = false;
-        this.charts = {};
-        this.reconnectInterval = 5000;
-        this.initializeWebSocket();
-        this.initializeCharts();
-    }
-    
-    initializeWebSocket() {
-        try {
-            this.ws = new WebSocket(`ws://${window.location.host}/ws`);
-            
-            this.ws.onopen = () => {
-                console.log('WebSocket conectado');
-                this.updateConnectionStatus('WebSocket', 'conectado');
-                this.stopPolling();
-            };
-            
-            this.ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                if (message.type === 'data_update') {
-                    this.updateDashboard(message.data);
-                }
-            };
-            
-            this.ws.onclose = () => {
-                console.log('WebSocket desconectado - ativando polling');
-                this.updateConnectionStatus('Polling', 'ativo');
-                this.startPolling();
-                setTimeout(() => this.initializeWebSocket(), this.reconnectInterval);
-            };
-        } catch (error) {
-            console.log('WebSocket não disponível - usando polling');
-            this.startPolling();
-        }
-    }
-    
-    startPolling() {
-        if (this.isPolling) return;
-        this.isPolling = true;
-        
-        const poll = async () => {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                this.updateDashboard(data);
-            } catch (error) {
-                console.error('Erro no polling:', error);
-            }
-            
-            if (this.isPolling) {
-                setTimeout(poll, 3000);
-            }
-        };
-        
-        poll();
-    }
-    
-    updateDashboard(data) {
-        // Atualiza métricas principais
-        document.getElementById('total-vendas').textContent = data.total_vendas;
-        document.getElementById('total-linhas').textContent = data.linhas;
-        document.getElementById('ultima-atualizacao').textContent = 
-            new Date(data.ultimo_timestamp).toLocaleString();
-        
-        // Atualiza gráficos
-        this.updateLineChart(data);
-        this.updatePieChart(data);
-        this.updateTables(data);
-    }
-    
-    initializeCharts() {
-        // Gráfico de linha para evolução temporal
-        const lineCtx = document.getElementById('lineChart').getContext('2d');
-        this.charts.line = new Chart(lineCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [] },
-            options: {
-                responsive: true,
-                plugins: { title: { display: true, text: 'Evolução de Vendas' } }
-            }
-        });
-        
-        // Gráfico de pizza para distribuição por produto
-        const pieCtx = document.getElementById('pieChart').getContext('2d');
-        this.charts.pie = new Chart(pieCtx, {
-            type: 'pie',
-            data: { labels: [], datasets: [] },
-            options: {
-                responsive: true,
-                plugins: { title: { display: true, text: 'Vendas por Produto' } }
-            }
-        });
-    }
+		<pre><code class="language-javascript">const state = {
+  ws: null,
+  reconnectAttempts: 0,
+  maxReconnect: 10,
+  reconnectDelay: 2000,
+  charts: {}
+};
+
+function $(id){ return document.getElementById(id); }
+
+function updateSnapshot(snap){
+  if(!snap) return;
+  $("totalVendas").textContent = snap.total_vendas ?? '--';
+  $("ultimaAtualizacao").textContent = snap.ultimo_timestamp ?? '--';
+  $("linhasCsv").textContent = snap.linhas ?? '--';
+  $("atualizadoEm").textContent = snap.atualizado_em ?? '--';
+  renderTable("tabelaVendas", snap.vendas_por_produto, 'Vendas');
+  renderTable("tabelaEstoque", snap.estoque_por_produto, 'Estoque');
+  buildPieChart(snap.vendas_por_produto);
 }
 
-// Inicializar dashboard
-const dashboard = new DashboardManager();
+function renderTable(tableId, dataObj, label){
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  tbody.innerHTML = '';
+  if(!dataObj || Object.keys(dataObj).length === 0){
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 2;
+    td.textContent = 'Sem dados';
+    td.style.textAlign = 'center';
+    tr.appendChild(td); tbody.appendChild(tr); return;
+  }
+  const entries = Object.entries(dataObj).sort((a,b)=> a[0].localeCompare(b[0]));
+  for(const [produto, valor] of entries){
+    const tr = document.createElement('tr');
+    const tdP = document.createElement('td'); tdP.textContent = produto;
+    const tdV = document.createElement('td'); tdV.textContent = valor;
+    tr.appendChild(tdP); tr.appendChild(tdV); tbody.appendChild(tr);
+  }
+}
+
+async function fetchSnapshot(){
+  try{
+    const r = await fetch('/api/data');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    updateSnapshot(data);
+    setStatus('Polling', 'ok');
+  }catch(e){
+    setStatus('Falha polling', 'err');
+  }
+}
+
+function setStatus(text, cls){
+  const el = $("status");
+  el.textContent = text;
+  el.className = `status ${cls||''}`;
+}
+
+function connectWebSocket(){
+  const wsUrl = `ws://${window.location.host}/ws`;
+  state.ws = new WebSocket(wsUrl);
+
+  state.ws.onopen = () => {
+    console.log('WebSocket conectado');
+    setStatus('WebSocket conectado', 'ok');
+    state.reconnectAttempts = 0;
+  };
+
+  state.ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    updateSnapshot(data);
+  };
+
+  state.ws.onclose = () => {
+    console.log('WebSocket desconectado');
+    setStatus('Reconectando...', 'warn');
+    attemptReconnect();
+  };
+
+  state.ws.onerror = (error) => {
+    console.error('Erro WebSocket:', error);
+    setStatus('Erro WebSocket', 'err');
+  };
+}
+
+function attemptReconnect(){
+  if(state.reconnectAttempts >= state.maxReconnect){
+    console.log('Max tentativas de reconexão atingido, mudando para polling');
+    setStatus('Polling ativo', 'warn');
+    startPolling();
+    return;
+  }
+  
+  state.reconnectAttempts++;
+  setTimeout(() => {
+    console.log(`Tentativa de reconexão ${state.reconnectAttempts}`);
+    connectWebSocket();
+  }, state.reconnectDelay);
+}
+
+function startPolling(){
+  setInterval(fetchSnapshot, 3000); // Poll a cada 3s
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+  connectWebSocket();
+  initializeCharts();
+});
 </code></pre>
 		<h2>Estrutura do Projeto</h2>
 		<p>Organização profissional do código fonte:</p>
