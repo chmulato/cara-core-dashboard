@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Debug</title>
+</head>
+<body>
+    <h1>Teste Debug Dashboard</h1>
+    <div id="status">Testando...</div>
+    
+    <script>
+        console.log('🧪 Iniciando teste de debug...');
+        
+        // Testar se conseguimos fazer fetch
+        fetch('/api/data')
+            .then(r => {
+                console.log('✅ Fetch /api/data OK:', r.status);
+                return r.json();
+            })
+            .then(data => {
+                console.log('📊 Dados recebidos:', data);
+                document.getElementById('status').textContent = 'API funcionando! Vendas: ' + (data.total_vendas || 'N/A');
+            })
+            .catch(e => {
+                console.error('❌ Erro no fetch:', e);
+                document.getElementById('status').textContent = 'Erro: ' + e.message;
+            });
+    </script>
+</body>
+</html>

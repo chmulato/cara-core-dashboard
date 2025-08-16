@@ -1,10 +1,126 @@
 timestamp,produto,vendas,estoque
-2025-08-16T00:20,Produto A,2,98
-2025-08-16T00:20,Produto B,3,97
-2025-08-16T00:20,Produto C,8,92
-2025-08-16T00:25,Produto A,3,95
-2025-08-16T00:25,Produto B,9,88
-2025-08-16T00:25,Produto C,8,84
-2025-08-16T00:30,Produto A,9,86
-2025-08-16T00:30,Produto B,3,85
-2025-08-16T00:30,Produto C,10,74
+2025-08-15T20:42,Smartphone Pro Max,53,76
+2025-08-15T20:42,Notebook Gaming,32,39
+2025-08-15T20:42,Tablet Ultra,42,59
+2025-08-15T20:42,Smartwatch Elite,51,91
+2025-08-15T20:42,Fones Bluetooth,75,148
+2025-08-15T20:47,Smartphone Pro Max,57,72
+2025-08-15T20:47,Notebook Gaming,32,39
+2025-08-15T20:47,Tablet Ultra,50,51
+2025-08-15T20:47,Smartwatch Elite,53,89
+2025-08-15T20:47,Fones Bluetooth,74,148
+2025-08-15T20:52,Smartphone Pro Max,59,68
+2025-08-15T20:52,Notebook Gaming,31,37
+2025-08-15T20:52,Tablet Ultra,53,47
+2025-08-15T20:52,Smartwatch Elite,50,89
+2025-08-15T20:52,Fones Bluetooth,73,149
+2025-08-15T20:57,Smartphone Pro Max,62,66
+2025-08-15T20:57,Notebook Gaming,29,37
+2025-08-15T20:57,Tablet Ultra,61,39
+2025-08-15T20:57,Smartwatch Elite,58,82
+2025-08-15T20:57,Fones Bluetooth,70,149
+2025-08-15T21:02,Smartphone Pro Max,62,66
+2025-08-15T21:02,Notebook Gaming,28,35
+2025-08-15T21:02,Tablet Ultra,61,40
+2025-08-15T21:02,Smartwatch Elite,56,82
+2025-08-15T21:02,Fones Bluetooth,67,148
+2025-08-15T21:07,Smartphone Pro Max,70,57
+2025-08-15T21:07,Notebook Gaming,29,34
+2025-08-15T21:07,Tablet Ultra,67,34
+2025-08-15T21:07,Smartwatch Elite,62,74
+2025-08-15T21:07,Fones Bluetooth,74,141
+2025-08-15T21:12,Smartphone Pro Max,75,50
+2025-08-15T21:12,Notebook Gaming,27,33
+2025-08-15T21:12,Tablet Ultra,75,25
+2025-08-15T21:12,Smartwatch Elite,60,73
+2025-08-15T21:12,Fones Bluetooth,78,136
+2025-08-15T21:17,Smartphone Pro Max,76,50
+2025-08-15T21:17,Notebook Gaming,34,27
+2025-08-15T21:17,Tablet Ultra,75,23
+2025-08-15T21:17,Smartwatch Elite,58,73
+2025-08-15T21:17,Fones Bluetooth,81,134
+2025-08-15T21:22,Smartphone Pro Max,84,42
+2025-08-15T21:22,Notebook Gaming,32,28
+2025-08-15T21:22,Tablet Ultra,83,14
+2025-08-15T21:22,Smartwatch Elite,55,73
+2025-08-15T21:22,Fones Bluetooth,84,131
+2025-08-15T21:27,Smartphone Pro Max,81,40
+2025-08-15T21:27,Notebook Gaming,32,29
+2025-08-15T21:27,Tablet Ultra,86,10
+2025-08-15T21:27,Smartwatch Elite,56,70
+2025-08-15T21:27,Fones Bluetooth,84,132
+2025-08-15T21:32,Smartphone Pro Max,88,34
+2025-08-15T21:32,Notebook Gaming,31,29
+2025-08-15T21:32,Tablet Ultra,83,11
+2025-08-15T21:32,Smartwatch Elite,63,61
+2025-08-15T21:32,Fones Bluetooth,90,126
+2025-08-15T21:37,Smartphone Pro Max,95,25
+2025-08-15T21:37,Notebook Gaming,35,25
+2025-08-15T21:37,Tablet Ultra,84,10
+2025-08-15T21:37,Smartwatch Elite,67,56
+2025-08-15T21:37,Fones Bluetooth,95,120
+2025-08-15T21:42,Smartphone Pro Max,93,26
+2025-08-15T21:42,Notebook Gaming,38,20
+2025-08-15T21:42,Tablet Ultra,87,10
+2025-08-15T21:42,Smartwatch Elite,74,49
+2025-08-15T21:42,Fones Bluetooth,95,120
+2025-08-15T21:47,Smartphone Pro Max,101,17
+2025-08-15T21:47,Notebook Gaming,38,21
+2025-08-15T21:47,Tablet Ultra,88,10
+2025-08-15T21:47,Smartwatch Elite,82,41
+2025-08-15T21:47,Fones Bluetooth,101,113
+2025-08-15T21:52,Smartphone Pro Max,109,10
+2025-08-15T21:52,Notebook Gaming,37,22
+2025-08-15T21:52,Tablet Ultra,95,10
+2025-08-15T21:52,Smartwatch Elite,79,39
+2025-08-15T21:52,Fones Bluetooth,108,104
+2025-08-15T21:57,Smartphone Pro Max,113,10
+2025-08-15T21:57,Notebook Gaming,38,20
+2025-08-15T21:57,Tablet Ultra,102,10
+2025-08-15T21:57,Smartwatch Elite,76,37
+2025-08-15T21:57,Fones Bluetooth,112,101
+2025-08-15T22:02,Smartphone Pro Max,116,10
+2025-08-15T22:02,Notebook Gaming,35,21
+2025-08-15T22:02,Tablet Ultra,109,10
+2025-08-15T22:02,Smartwatch Elite,79,35
+2025-08-15T22:02,Fones Bluetooth,110,101
+2025-08-15T22:07,Smartphone Pro Max,119,10
+2025-08-15T22:07,Notebook Gaming,43,11
+2025-08-15T22:07,Tablet Ultra,114,10
+2025-08-15T22:07,Smartwatch Elite,78,36
+2025-08-15T22:07,Fones Bluetooth,110,99
+2025-08-15T22:12,Smartphone Pro Max,122,10
+2025-08-15T22:12,Notebook Gaming,49,10
+2025-08-15T22:12,Tablet Ultra,119,10
+2025-08-15T22:12,Smartwatch Elite,86,28
+2025-08-15T22:12,Fones Bluetooth,113,94
+2025-08-15T22:17,Smartphone Pro Max,121,11
+2025-08-15T22:17,Notebook Gaming,54,10
+2025-08-15T22:17,Tablet Ultra,121,10
+2025-08-15T22:17,Smartwatch Elite,92,23
+2025-08-15T22:17,Fones Bluetooth,120,88
+2025-08-15T22:22,Smartphone Pro Max,129,10
+2025-08-15T22:22,Notebook Gaming,52,10
+2025-08-15T22:22,Tablet Ultra,123,10
+2025-08-15T22:22,Smartwatch Elite,95,20
+2025-08-15T22:22,Fones Bluetooth,128,80
+2025-08-15T22:27,Smartphone Pro Max,131,10
+2025-08-15T22:27,Notebook Gaming,50,11
+2025-08-15T22:27,Tablet Ultra,121,10
+2025-08-15T22:27,Smartwatch Elite,102,13
+2025-08-15T22:27,Fones Bluetooth,126,78
+2025-08-15T22:32,Smartphone Pro Max,128,10
+2025-08-15T22:32,Notebook Gaming,58,10
+2025-08-15T22:32,Tablet Ultra,128,10
+2025-08-15T22:32,Smartwatch Elite,109,10
+2025-08-15T22:32,Fones Bluetooth,129,73
+2025-08-15T22:37,Smartphone Pro Max,125,11
+2025-08-15T22:37,Notebook Gaming,58,11
+2025-08-15T22:37,Tablet Ultra,130,10
+2025-08-15T22:37,Smartwatch Elite,110,10
+2025-08-15T22:37,Fones Bluetooth,134,67
+2025-08-15T22:42,Smartphone Pro Max,125,10
+2025-08-15T22:42,Notebook Gaming,63,10
+2025-08-15T22:42,Tablet Ultra,134,10
+2025-08-15T22:42,Smartwatch Elite,115,10
+2025-08-15T22:42,Fones Bluetooth,138,61

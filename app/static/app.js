@@ -1,3 +1,5 @@
+console.log('🚀 app.js carregado!');
+
 const state = {
   ws: null,
   reconnectAttempts: 0,
@@ -9,15 +11,31 @@ const state = {
 function $(id){ return document.getElementById(id); }
 
 function updateSnapshot(snap){
-  if(!snap) return;
+  if(!snap) {
+    console.error('❌ Snapshot vazio recebido');
+    return;
+  }
+  
+  console.log('📊 Atualizando snapshot:', snap);
+  console.log('🔍 Vendas por produto:', snap.vendas_por_produto);
+  
   $("totalVendas").textContent = snap.total_vendas ?? '--';
   $("ultimaAtualizacao").textContent = snap.ultimo_timestamp ?? '--';
   $("linhasCsv").textContent = snap.linhas ?? '--';
   $("atualizadoEm").textContent = snap.atualizado_em ?? '--';
+  
   renderTable("tabelaVendas", snap.vendas_por_produto, 'Vendas');
   renderTable("tabelaEstoque", snap.estoque_por_produto, 'Estoque');
+  
+  // Verificar se o elemento do gráfico de pizza existe
+  const pizzaCanvas = document.getElementById('chartPizza');
+  console.log('🎯 Canvas chartPizza encontrado:', !!pizzaCanvas);
+  
   buildPieChart(snap.vendas_por_produto);
-  // charts atualizados separadamente
+  
+  // Força carregamento dos gráficos de linha
+  console.log('🔄 Carregando gráficos históricos...');
+  loadHistorico();
 }
 
 function renderTable(tableId, dataObj, label){
@@ -87,6 +105,27 @@ function initWS(){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 DOM carregado, iniciando dashboard...');
+  
+  // Verificar se Chart.js foi carregado
+  if (typeof Chart === 'undefined') {
+    console.error('❌ Chart.js não foi carregado!');
+    return;
+  } else {
+    console.log('✅ Chart.js carregado, versão:', Chart.version);
+  }
+  
+  // Verificar se os canvas existem
+  const canvases = ['chartPizza', 'chartVendas', 'chartEstoque'];
+  canvases.forEach(id => {
+    const canvas = document.getElementById(id);
+    console.log(`🎯 Canvas ${id}:`, !!canvas);
+    if (canvas) {
+      console.log(`   - Dimensões: ${canvas.width}x${canvas.height}`);
+      console.log(`   - Contexto 2D:`, !!canvas.getContext('2d'));
+    }
+  });
+  
   initWS();
   // Fallback: polling a cada 10s
   setInterval(()=>{ if(!state.ws || state.ws.readyState !== WebSocket.OPEN) fetchSnapshot(); }, 10000);
@@ -105,50 +144,88 @@ async function loadHistorico(){
 }
 
 function ensureChart(id, label, yTitle){
-  if(state.charts[id]) return state.charts[id];
-  const ctx = document.getElementById(id).getContext('2d');
+  console.log(`🎨 Criando/verificando chart: ${id}`);
   
-  if(id === 'chartPizza'){
-    state.charts[id] = new Chart(ctx, {
-      type: 'pie',
-      data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
-      options: {
-        responsive: true,
-        animation: false,
-        plugins: { 
-          legend: { position: 'bottom' },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const label = context.label || '';
-                const value = context.parsed || 0;
-                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                return `${label}: ${value} (${percentage}%)`;
+  if(state.charts[id]) {
+    console.log(`♻️ Chart ${id} já existe, retornando instância existente`);
+    return state.charts[id];
+  }
+  
+  const canvas = document.getElementById(id);
+  if (!canvas) {
+    console.error(`❌ Canvas ${id} não encontrado! Elementos disponíveis:`, 
+      Array.from(document.querySelectorAll('canvas')).map(c => c.id));
+    return null;
+  }
+  
+  console.log(`✅ Canvas ${id} encontrado, criando chart...`);
+  console.log(`   - Canvas válido:`, canvas instanceof HTMLCanvasElement);
+  
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error(`❌ Não foi possível obter contexto 2D para ${id}`);
+    return null;
+  }
+  
+  console.log(`🎨 Contexto 2D obtido para ${id}`);
+  
+  try {
+    if(id === 'chartPizza'){
+      console.log('🥧 Criando gráfico de pizza...');
+      state.charts[id] = new Chart(ctx, {
+        type: 'pie',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+        options: {
+          responsive: true,
+          animation: false,
+          plugins: { 
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
               }
             }
           }
         }
-      }
-    });
-  } else {
-    state.charts[id] = new Chart(ctx, {
-      type: 'line',
-      data: { labels: [], datasets: [] },
-      options: {
-        responsive: true,
-        animation: false,
-        interaction: { intersect: false, mode: 'index' },
-        plugins: { legend: { position: 'bottom' } },
-        scales: { y: { title: { display: true, text: yTitle } }, x: { ticks: { maxRotation: 45, minRotation: 0 } } }
-      }
-    });
+      });
+    } else {
+      console.log(`📈 Criando gráfico de linha para ${id}...`);
+      state.charts[id] = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: {
+          responsive: true,
+          animation: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: { legend: { position: 'bottom' } },
+          scales: { y: { title: { display: true, text: yTitle } }, x: { ticks: { maxRotation: 45, minRotation: 0 } } }
+        }
+      });
+    }
+    
+    console.log(`🎉 Chart ${id} criado com sucesso!`, state.charts[id]);
+    return state.charts[id];
+    
+  } catch (error) {
+    console.error(`❌ Erro ao criar chart ${id}:`, error);
+    return null;
   }
-  return state.charts[id];
 }
 
 function buildCharts(rows){
-  if(!Array.isArray(rows) || rows.length === 0) return;
+  console.log('📈 Construindo gráficos de linha:', rows);
+  
+  if(!Array.isArray(rows) || rows.length === 0) {
+    console.log('❌ Não há dados históricos para gráficos de linha');
+    return;
+  }
+  
   const vendasSeries = {};
   const estoqueSeries = {};
   const labels = [];
@@ -160,6 +237,10 @@ function buildCharts(rows){
   const rowByLabel = {};
   rows.forEach(r => { const ts = r.timestamp; rowByLabel[ts] = rowByLabel[ts] || []; rowByLabel[ts].push(r); });
   const produtos = new Set(rows.map(r=>r.produto));
+  
+  console.log('📊 Produtos encontrados:', Array.from(produtos));
+  console.log('🏷️ Labels únicos:', uniqueLabels.length);
+  
   produtos.forEach(p => {
     vendasSeries[p] = uniqueLabels.map(l => {
       const arr = rowByLabel[l] || [];
@@ -173,24 +254,44 @@ function buildCharts(rows){
       return found[found.length-1].estoque ?? null;
     });
   });
+  
   const chartV = ensureChart('chartVendas','Vendas','Vendas');
   const chartE = ensureChart('chartEstoque','Estoque','Estoque');
+  
+  if (!chartV || !chartE) {
+    console.error('❌ Não foi possível criar gráficos de linha');
+    return;
+  }
+  
   chartV.data.labels = uniqueLabels;
   chartE.data.labels = uniqueLabels;
   chartV.data.datasets = Object.entries(vendasSeries).map(([p,data]) => ({ label: p, data, tension: 0.2 }));
   chartE.data.datasets = Object.entries(estoqueSeries).map(([p,data]) => ({ label: p, data, tension: 0.2 }));
   chartV.update();
   chartE.update();
+  
+  console.log('✅ Gráficos de linha atualizados!');
 }
 
 function buildPieChart(vendas_por_produto){
-  if(!vendas_por_produto || Object.keys(vendas_por_produto).length === 0) return;
+  console.log('🥧 Construindo gráfico de pizza:', vendas_por_produto);
+  
+  if(!vendas_por_produto || Object.keys(vendas_por_produto).length === 0) {
+    console.log('❌ Não há dados para o gráfico de pizza');
+    return;
+  }
   
   const chartPie = ensureChart('chartPizza', 'Distribuição de Vendas', '');
+  if (!chartPie) {
+    console.error('❌ Não foi possível criar o gráfico de pizza');
+    return;
+  }
   
   const entries = Object.entries(vendas_por_produto);
   const labels = entries.map(([produto]) => produto);
   const data = entries.map(([, vendas]) => vendas);
+  
+  console.log('📊 Dados do gráfico de pizza:', { labels, data });
   
   // Cores vibrantes para cada fatia
   const colors = [
@@ -202,4 +303,8 @@ function buildPieChart(vendas_por_produto){
   chartPie.data.datasets[0].data = data;
   chartPie.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
   chartPie.update();
+  
+  console.log('✅ Gráfico de pizza atualizado!');
 }
+
+// Adicionar inicialização quando a página carregar (removido pois já existe acima)

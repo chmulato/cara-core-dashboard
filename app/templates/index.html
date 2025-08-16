@@ -28,40 +28,48 @@
         </div>
     </section>
 
-    <section class="grid">
-        <div>
-            <h2>Vendas por Produto (Tabela)</h2>
-            <table id="tabelaVendas">
-                <thead><tr><th>Produto</th><th>Vendas</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        <div>
-            <h2>Estoque por Produto (Tabela)</h2>
-            <table id="tabelaEstoque">
-                <thead><tr><th>Produto</th><th>Estoque</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        <div>
-            <h2>Distribuição de Vendas (Pizza)</h2>
-            <canvas id="chartPizza" height="180"></canvas>
-        </div>
-        <div>
-            <h2>Série Temporal Vendas (Últimas)</h2>
-            <canvas id="chartVendas" height="180"></canvas>
-        </div>
-        <div>
-            <h2>Série Temporal Estoque (Últimas)</h2>
-            <canvas id="chartEstoque" height="180"></canvas>
-        </div>
-    </section>
+    <div class="dashboard-layout">
+        <section class="charts-section">
+            <div class="chart-container chart-pizza">
+                <h2>📊 Distribuição de Vendas por Produto</h2>
+                <canvas id="chartPizza"></canvas>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container">
+                    <h2>📈 Histórico de Vendas</h2>
+                    <canvas id="chartVendas"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h2>📦 Histórico de Estoque</h2>
+                    <canvas id="chartEstoque"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <aside class="sidebar">
+            <div class="table-container">
+                <h2>🛒 Vendas por Produto</h2>
+                <table id="tabelaVendas">
+                    <thead><tr><th>Produto</th><th>Vendas</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="table-container">
+                <h2>📦 Estoque por Produto</h2>
+                <table id="tabelaEstoque">
+                    <thead><tr><th>Produto</th><th>Estoque</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </aside>
+    </div>
 </main>
 
 <footer>
     <small>Atualizado em: <span id="atualizadoEm">--</span></small>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-1EuiH730cdpShUMpOWcZH/5LiCFYI8aAkaI0s5momkGumZ+UpBAkLTlaX2UjsFvZ" crossorigin="anonymous"></script>
-<script src="/static/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="/static/app_complete.js"></script>
 </body>
 </html>

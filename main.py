@@ -86,7 +86,7 @@ def main():
     print(f"📊 Linhas de dados: {len(data_file.read_text().splitlines()) - 1}")
     
     print("\n🌐 Iniciando servidor...")
-    print("   URL: http://localhost:8000")
+    print("   URL: http://localhost:8001")
     print("   Ctrl+C para parar\n")
     
     try:
@@ -95,7 +95,7 @@ def main():
             sys.executable, "-m", "uvicorn",
             "app.main:app",
             "--host", "0.0.0.0",
-            "--port", "8000",
+            "--port", "8001",
             "--log-level", "info"
         ], check=True)
     except KeyboardInterrupt:
