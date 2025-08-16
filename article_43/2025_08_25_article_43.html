@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-br		<p>
+			Est		<h2>Arquitetura do Sistema</h2>
+		<ul>
+			<li>Monitoramento automático de arquivo CSV com atualizações em tempo real</li>
+			<li>API REST para consultas de dados históricos e agregados</li>
+			<li>WebSocket para push de atualizações instantâneas aos clientes</li>
+			<li>Interface web responsiva com gráficos interativos (Chart.js)</li>
+			<li>Sistema de fallback: polling quando WebSocket falha</li>
+			<li>Logging estruturado em JSON com rotação de arquivos</li>
+		</ul>apresenta um sistema completo de dashboard de vendas que atualiza automaticamente em tempo real. Usando FastAPI, WebSockets e Chart.js, criamos uma solução profissional que monitora dados de vendas e estoque continuamente.
+		</p>
+
+		<p style="background:#f8f9fa; padding:1rem 1.25rem; border-left:4px solid #10B981; border-radius:6px;">
+			<strong>Projeto real:</strong> Desenvolvemos um dashboard que lê dados de um arquivo CSV (exportado do Excel), detecta alterações automaticamente e envia atualizações para todos os navegadores conectados via WebSocket. O sistema inclui gráficos de linha para tendências temporais, gráfico de pizza para distribuição de produtos, e fallback automático para polling quando WebSockets não estão disponíveis.
+		</p>ad>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard de Vendas em Tempo Real com Python, FastAPI e WebSockets — Cara Core Informática</title>
+	<meta name="description" content="Guia completo para criar um dashboard de vendas em tempo real usando FastAPI, WebSockets e Chart.js. Sistema profissional com gráficos interativos e atualizações automáticas.">
+	<meta name="keywords" content="Dashboard Tempo Real, FastAPI, WebSockets, Python, Chart.js, Vendas, Análise de Dados, Visualização, Dashboard Interativo">
+	<meta name="author" content="Cara Core Informática">
+	<link rel="canonical" href="https://caracore.com.br/publications/articles/2025_08_28_article_43.html">
+	<!-- Open Graph -->
+	<meta property="og:title" content="Dashboard de Vendas em Tempo Real com Python, FastAPI e WebSockets — Cara Core Informática">
+	<meta property="og:description" content="Sistema completo de dashboard com atualizações em tempo real, gráficos interativos e arquitetura profissional.">
+	<meta property="og:type" content="article">
+	<meta property="og:url" content="https://caracore.com.br/publications/articles/2025_08_28_article_43.html">
+	<meta property="og:image" content="https://caracore.com.br/publications/articles/media/article_43_01.png">
+	<!-- Twitter Card -->
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Dashboard de Vendas em Tempo Real com Python, FastAPI e WebSockets — Cara Core Informática">
+	<meta name="twitter:description" content="Sistema profissional de dashboard com atualizações automáticas e gráficos interativos.">
+	<meta name="twitter:image" content="https://caracore.com.br/publications/articles/media/article_43_01.png">
+	<link rel="stylesheet" href="css/articles.css">
+</head>
+<body>
+	<div class="container">
+		<a href="../articles.html" class="back-link">&larr; Voltar para publicações</a>
+		<img src="media/article_43_01.png" alt="Dashboard de vendas em tempo real com FastAPI e WebSockets" style="max-width:320px; float:right; margin:0 0 1.5rem 2rem; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+		<h1>Dashboard de Vendas em Tempo Real com Python, FastAPI e WebSockets</h1>
+		<div class="linkedin-box" style="margin-bottom: 1.5rem; display: flex; align-items: center;">
+			<img src="media/logo.png" alt="Logo Cara Core" style="width:33%; max-width:40px; margin-right:10px;">
+			<a href="https://www.linkedin.com/company/cara-core/" target="_blank" rel="noopener">Cara Core Informática</a>
+			<span style="margin-left: 1.5rem;">82 seguidores<br>25 de agosto de 2025</span>
+		</div>
+
+		<p>
+			Este guia mostra, de forma simples, como transformar suas planilhas de vendas em um painel visual usando Python. Mesmo que você não seja analista de dados, vai conseguir montar uma visão clara para tomar decisões melhores.
+		</p>
+
+		<p style="background:#f8f9fa; padding:1rem 1.25rem; border-left:4px solid #10B981; border-radius:6px;">
+			<strong>História rápida:</strong> uma pequena loja de produtos naturais tinha 8 planilhas mensais diferentes. O dono só sabia “se vendeu bem” olhando o saldo bancário no fim da semana. Depois de organizar e visualizar dados em um dashboard simples (ticket médio, produtos que mais giram e horas de pico), ele ajustou estoque e reduziu perda de itens perecíveis em 22% em 2 meses.
+		</p>
+
+		<h2>Objetivo do Dashboard</h2>
+		<ul>
+			<li>Responder rápido: “Como estão as vendas do mês vs. mês passado?”</li>
+			<li>Encontrar produtos campeões e encalhados.</li>
+			<li>Prever necessidade de reposição básica.</li>
+			<li>Monitorar ticket médio e número de pedidos.</li>
+		</ul>
+
+		<h2>Componentes do Dashboard</h2>
+		<ul>
+			<li><strong>Métricas Principais</strong>: Total de vendas, linhas de dados, última atualização</li>
+			<li><strong>Tabelas Interativas</strong>: Vendas e estoque por produto em tempo real</li>
+			<li><strong>Gráfico de Linha</strong>: Evolução temporal das vendas e estoque</li>
+			<li><strong>Gráfico de Pizza</strong>: Distribuição de vendas por produto</li>
+			<li><strong>Status de Conexão</strong>: Indicador visual de WebSocket/polling</li>
+			<li><strong>Atualizações Automáticas</strong>: Dados atualizados a cada mudança no arquivo</li>
+		</ul>
+
+		<h2>Estrutura de Dados</h2>
+		<p>O sistema utiliza um arquivo CSV simples com estrutura padronizada:</p>
+		<figure style="margin:1.25rem 0 1.75rem; text-align:center;">
+			<img src="media/article_43_02.png" alt="Arquitetura: CSV sendo monitorado por watchdog, dados processados pelo FastAPI, enviados via WebSocket para dashboard web" style="max-width:780px; width:100%; border-radius:10px; box-shadow:0 4px 18px -4px rgba(0,0,0,0.12);">
+			<figcaption style="font-size:.85rem; color:#555; margin-top:.6rem;">Figura 1 – Fluxo de dados: monitoramento de arquivo → FastAPI → WebSocket → dashboard em tempo real.</figcaption>
+		</figure>
+		<pre><code class="language-text">timestamp,produto,vendas,estoque
+2025-08-15 14:30:00,Produto A,120,45
+2025-08-15 14:33:00,Produto B,85,32
+2025-08-15 14:36:00,Produto C,95,28
+2025-08-15 14:39:00,Produto D,110,15
+2025-08-15 14:42:00,Produto E,75,22</code></pre>
+
+		<h2>Configuração do Ambiente</h2>
+		<pre><code class="language-bash"># Clone o projeto
+git clone https://github.com/chmulato/cara-core-dashboard.git
+cd cara-core-dashboard
+
+# Instale dependências
+pip install -r requirements.txt
+
+# Execute o dashboard
+python main.py</code></pre>
+
+		<h2>Backend: FastAPI com WebSockets</h2>
+		<pre><code class="language-python">from fastapi import FastAPI, WebSocket
+from fastapi.responses import HTMLResponse
+import pandas as pd
+import json
+from datetime import datetime
+
+app = FastAPI()
+
+class DataManager:
+    def __init__(self):
+        self.data = None
+        self.connections = []
+    
+    def load_data(self, file_path):
+        """Carrega dados do CSV e converte tipos numpy para JSON-safe."""
+        try:
+            df = pd.read_csv(file_path, parse_dates=['timestamp'])
+            self.data = self.make_json_safe(df.to_dict('records'))
+            return True
+        except Exception as e:
+            print(f"Erro ao carregar dados: {e}")
+            return False
+    
+    def make_json_safe(self, data):
+        """Converte tipos numpy/pandas para tipos nativos Python."""
+        if isinstance(data, list):
+            return [self.make_json_safe(item) for item in data]
+        elif isinstance(data, dict):
+            return {k: self.make_json_safe(v) for k, v in data.items()}
+        elif hasattr(data, 'item'):  # numpy types
+            return data.item()
+        return data
+    
+    async def broadcast_update(self, message):
+        """Envia atualizações para todos os clientes conectados."""
+        if self.connections:
+            disconnected = []
+            for websocket in self.connections:
+                try:
+                    await websocket.send_json(message)
+                except:
+                    disconnected.append(websocket)
+            
+            # Remove conexões desconectadas
+            for ws in disconnected:
+                self.connections.remove(ws)
+
+data_manager = DataManager()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    data_manager.connections.append(websocket)
+    
+    try:
+        while True:
+            await websocket.receive_text()
+    except:
+        data_manager.connections.remove(websocket)
+
+@app.get("/api/data")
+async def get_data():
+    """Retorna dados agregados atuais."""
+    if not data_manager.data:
+        return {"error": "Dados não carregados"}
+    
+    df = pd.DataFrame(data_manager.data)
+    return {
+        "total_vendas": int(df["vendas"].sum()),
+        "vendas_por_produto": df.groupby("produto")["vendas"].sum().to_dict(),
+        "estoque_por_produto": df.groupby("produto")["estoque"].last().to_dict(),
+        "linhas": len(df),
+        "ultimo_timestamp": df["timestamp"].max().isoformat() if not df.empty else None,
+        "atualizado_em": datetime.now().isoformat()
+    }
+</code></pre>
+
+		<h2>Monitoramento de Arquivo em Tempo Real</h2>
+		<pre><code class="language-python">from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import asyncio
+import logging
+
+class CSVHandler(FileSystemEventHandler):
+    def __init__(self, data_manager, csv_path):
+        self.data_manager = data_manager
+        self.csv_path = csv_path
+        self.logger = logging.getLogger(__name__)
+    
+    def on_modified(self, event):
+        if event.src_path.endswith('.csv'):
+            self.logger.info(f"Arquivo modificado: {event.src_path}")
+            asyncio.create_task(self.process_update())
+    
+    async def process_update(self):
+        """Processa atualização de dados e notifica clientes."""
+        if self.data_manager.load_data(self.csv_path):
+            # Calcula dados agregados
+            data = await get_data()
+            
+            # Envia para todos os clientes conectados
+            await self.data_manager.broadcast_update({
+                "type": "data_update",
+                "data": data,
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            self.logger.info("Dados atualizados e enviados via WebSocket")
+
+def setup_file_monitoring(data_manager, csv_path):
+    """Configura monitoramento de arquivo com watchdog."""
+    event_handler = CSVHandler(data_manager, csv_path)
+    observer = Observer()
+    observer.schedule(event_handler, path=str(csv_path.parent), recursive=False)
+    observer.start()
+    return observer
+</code></pre>		<h2>Frontend: Dashboard Interativo</h2>
+		<pre><code class="language-javascript">class DashboardManager {
+    constructor() {
+        this.ws = null;
+        this.isPolling = false;
+        this.charts = {};
+        this.reconnectInterval = 5000;
+        this.initializeWebSocket();
+        this.initializeCharts();
+    }
+    
+    initializeWebSocket() {
+        try {
+            this.ws = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            this.ws.onopen = () => {
+                console.log('WebSocket conectado');
+                this.updateConnectionStatus('WebSocket', 'conectado');
+                this.stopPolling();
+            };
+            
+            this.ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === 'data_update') {
+                    this.updateDashboard(message.data);
+                }
+            };
+            
+            this.ws.onclose = () => {
+                console.log('WebSocket desconectado - ativando polling');
+                this.updateConnectionStatus('Polling', 'ativo');
+                this.startPolling();
+                setTimeout(() => this.initializeWebSocket(), this.reconnectInterval);
+            };
+        } catch (error) {
+            console.log('WebSocket não disponível - usando polling');
+            this.startPolling();
+        }
+    }
+    
+    startPolling() {
+        if (this.isPolling) return;
+        this.isPolling = true;
+        
+        const poll = async () => {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                this.updateDashboard(data);
+            } catch (error) {
+                console.error('Erro no polling:', error);
+            }
+            
+            if (this.isPolling) {
+                setTimeout(poll, 3000);
+            }
+        };
+        
+        poll();
+    }
+    
+    updateDashboard(data) {
+        // Atualiza métricas principais
+        document.getElementById('total-vendas').textContent = data.total_vendas;
+        document.getElementById('total-linhas').textContent = data.linhas;
+        document.getElementById('ultima-atualizacao').textContent = 
+            new Date(data.ultimo_timestamp).toLocaleString();
+        
+        // Atualiza gráficos
+        this.updateLineChart(data);
+        this.updatePieChart(data);
+        this.updateTables(data);
+    }
+    
+    initializeCharts() {
+        // Gráfico de linha para evolução temporal
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        this.charts.line = new Chart(lineCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                plugins: { title: { display: true, text: 'Evolução de Vendas' } }
+            }
+        });
+        
+        // Gráfico de pizza para distribuição por produto
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        this.charts.pie = new Chart(pieCtx, {
+            type: 'pie',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                plugins: { title: { display: true, text: 'Vendas por Produto' } }
+            }
+        });
+    }
+}
+
+// Inicializar dashboard
+const dashboard = new DashboardManager();
+</code></pre>
+		<h2>Estrutura do Projeto</h2>
+		<p>Organização profissional do código fonte:</p>
+		<pre><code class="language-text">cara-core-dashboard/
+├── main.py                     # Ponto de entrada principal
+├── app/                        # Aplicação FastAPI
+│   ├── main.py                # Servidor FastAPI
+│   ├── data_loader.py         # Gerenciamento de dados
+│   ├── logging_setup.py       # Sistema de logs
+│   ├── sample_data.csv        # Dados de exemplo
+│   ├── templates/index.html   # Interface web
+│   └── static/                # CSS e JavaScript
+├── src/                        # Scripts utilitários
+│   ├── generate_batch_data.py # Geração de dados de teste
+│   ├── update_simulator.py    # Simulação de atualizações
+│   └── quick_demo_data.py     # Dados para demonstração
+├── tests/                      # Testes automatizados
+├── requirements.txt            # Dependências Python
+├── Dockerfile                  # Container Docker
+└── README.md                   # Documentação
+</code></pre>
+
+		<h2>Execução e Deploy</h2>
+		<p>Sistema com múltiplas opções de execução:</p>
+		<pre><code class="language-bash"># Execução local simples
+python main.py
+
+# Executar com logs detalhados
+LOG_LEVEL=DEBUG LOG_FORMAT=plain python main.py
+
+# Deploy com Docker
+docker build -t dashboard-vendas .
+docker run -p 8000:8000 dashboard-vendas
+
+# Gerar dados de teste
+python src/generate_batch_data.py --duracao-min 240 --produtos "A,B,C,D,E"
+
+# Simular atualizações em tempo real
+python src/update_simulator.py
+</code></pre>
+
+		<p>
+			O resultado é um sistema completo de dashboard que combina backend robusto (FastAPI), comunicação em tempo real (WebSockets), e interface moderna (Chart.js). O sistema detecta automaticamente mudanças no arquivo CSV, processa os dados e envia atualizações para todos os clientes conectados instantaneamente.
+		</p>
+
+		<figure style="margin:1.75rem 0 2rem; text-align:center;">
+			<img src="media/article_43_03.png" alt="Dashboard final com gráficos interativos, métricas em tempo real e status de conexão" style="max-width:820px; width:100%; border-radius:10px; box-shadow:0 4px 20px -4px rgba(0,0,0,0.15);">
+			<figcaption style="font-size:.85rem; color:#555; margin-top:.6rem;">Figura 2 – Interface final: dashboard responsivo com gráficos de linha, pizza, tabelas e indicadores em tempo real.</figcaption>
+		</figure>
+
+		<h2>Checklist de Implementação</h2>
+		<ul>
+			<li>Arquivo CSV estruturado com colunas: timestamp, produto, vendas, estoque</li>
+			<li>Dependências instaladas: FastAPI, WebSockets, pandas, uvicorn</li>
+			<li>Sistema de monitoramento de arquivo (watchdog) configurado</li>
+			<li>WebSocket funcionando com fallback para polling</li>
+			<li>Gráficos Chart.js renderizando corretamente</li>
+			<li>JSON serialization segura (conversão de tipos numpy/pandas)</li>
+			<li>Logging estruturado configurado</li>
+			<li>Testes automatizados executando</li>
+		</ul>
+
+		<h2>Funcionalidades Avançadas</h2>
+		<ul>
+			<li>Monitoramento de arquivo em tempo real com watchdog/polling</li>
+			<li>Sistema de reconnect automático para WebSockets</li>
+			<li>Serialização JSON segura para tipos numpy/pandas</li>
+			<li>Logging estruturado em JSON com rotação de arquivos</li>
+			<li>Containerização Docker para deploy</li>
+			<li>CI/CD com GitHub Actions (lint + testes)</li>
+			<li>Interface responsiva com Chart.js</li>
+			<li>Scripts de geração de dados para testes</li>
+		</ul>
+
+		<h2>Tecnologias Utilizadas</h2>
+		<ul>
+			<li><strong>FastAPI</strong>: framework web moderno e rápido para APIs REST</li>
+			<li><strong>WebSockets</strong>: comunicação bidirecional em tempo real</li>
+			<li><strong>Chart.js</strong>: biblioteca para gráficos interativos no frontend</li>
+			<li><strong>Watchdog</strong>: monitoramento de sistema de arquivos</li>
+			<li><strong>Pandas</strong>: processamento e análise de dados</li>
+			<li><strong>Uvicorn</strong>: servidor ASGI de alta performance</li>
+		</ul>
+
+		<h2>Resumo Final</h2>
+		<p>
+			Este projeto demonstra como criar um sistema completo de dashboard em tempo real usando tecnologias modernas. A arquitetura combina backend robusto (FastAPI), comunicação instantânea (WebSockets), e interface responsiva (Chart.js), resultando em uma solução profissional para monitoramento de vendas e estoque.
+		</p>
+
+		<h2>Próximos Passos</h2>
+		<ol>
+			<li>Clonar o repositório do projeto no GitHub</li>
+			<li>Instalar dependências com pip install -r requirements.txt</li>
+			<li>Executar o dashboard com python main.py</li>
+			<li>Testar atualizações em tempo real modificando o arquivo CSV</li>
+			<li>Personalizar gráficos e métricas conforme suas necessidades</li>
+			<li>Implementar deploy em produção usando Docker</li>
+		</ol>
+
+		<h2>Hashtags para Compartilhamento</h2>
+		<p style="background:#f8f9fa; padding:1rem 1.25rem; border-left:4px solid #0EA5E9; border-radius:6px; font-size:.9rem; line-height:1.6;">
+			<strong>Redes sociais:</strong> #DashboardTempoReal #FastAPI #WebSockets #ChartJS #PythonDashboard #DataVisualization #RealtimeDashboard #BusinessIntelligence #DataAnalytics #PythonWeb #DashboardInterativo #AnaliseVendas #MonitoramentoVendas #TechStack #DataDriven
+		</p>
+		<p style="color:#6b7280; font-size:.85rem; margin-top:.5rem;">
+			<em>Use essas hashtags ao compartilhar o artigo para alcançar desenvolvedores e analistas interessados em dashboards em tempo real.</em>
+		</p>
+
+		<hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;">
+
+		<h3>Contato</h3>
+		<ul>
+			<li><strong>E-mail:</strong> suporte@caracore.com.br</li>
+			<li><strong>Site:</strong> <a href="https://www.caracore.com.br" target="_blank" rel="noopener">www.caracore.com.br</a></li>
+			<li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/company/cara-core/" target="_blank" rel="noopener">Cara Core Informática</a></li>
+		</ul>
+	</div>
+</body>
+</html>
