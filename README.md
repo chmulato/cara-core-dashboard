@@ -9,6 +9,9 @@ Este projeto fornece um exemplo simples de dashboard web em Python (FastAPI) que
 - Canal WebSocket (`/ws`) para empurrar atualizações aos navegadores conectados.
 - Página HTML única em `index.html` com gráficos simples (renderização DOM) sem dependências pesadas.
 - Script opcional `update_simulator.py` para gerar linhas de vendas aleatórias (útil para demonstração).
+- Endpoint histórico `/api/historico?limit=100` e gráficos (Chart.js) de séries temporais de vendas e estoque.
+- Dockerfile para containerizar a aplicação.
+- Workflow CI (pytest + ruff) via GitHub Actions.
 
 ## Estrutura
 ```
@@ -39,6 +42,19 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 Acesse: http://127.0.0.1:8000
+
+### Testes & Lint
+```
+pip install -r requirements-dev.txt
+pytest -q
+ruff check .
+```
+
+### Docker
+```
+docker build -t cara-core-dashboard .
+docker run --rm -p 8000:8000 cara-core-dashboard
+```
 
 ## Publicação no GitHub
 Este projeto pode ser publicado no repositório `cara-core-dashboard`.
@@ -78,4 +94,7 @@ Mantenha cabeçalho com colunas mínimas: `timestamp,produto,vendas,estoque`.
 - Exportação de relatórios (Excel/PDF).
 
 ## Licença
-Uso livre para fins educacionais/demonstração.
+MIT - ver arquivo `LICENSE`.
+
+## CI
+Workflow em `.github/workflows/ci.yml` roda lint e testes em cada push/pull request.

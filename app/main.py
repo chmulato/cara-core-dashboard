@@ -1,11 +1,12 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Query
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import logging
 from pathlib import Path
 import asyncio
 from app.data_loader import DataManager
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
 logger = logging.getLogger(__name__)
@@ -87,6 +88,28 @@ async def index(request: Request):
 @app.get('/api/data')
 async def api_data():
     return data_manager.get_snapshot()
+
+
+@app.get('/api/historico')
+async def api_historico(limit: int = Query(100, ge=1, le=1000)):
+    """Retorna as últimas linhas (raw) do CSV para gráficos históricos."""
+    if not CSV_PATH.exists():
+        return []
+    try:
+        df = pd.read_csv(CSV_PATH)
+        if df.empty:
+            return []
+        if 'timestamp' in df.columns:
+            try:
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                df = df.sort_values('timestamp')
+            except Exception:
+                pass
+        df = df.tail(limit)
+        return JSONResponse(df.to_dict(orient='records'))
+    except Exception as e:
+        logger.error("Erro ao ler historico: %s", e)
+        return JSONResponse([], status_code=500)
 
 
 @app.websocket('/ws')

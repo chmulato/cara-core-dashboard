@@ -30,18 +30,26 @@
 
     <section class="grid">
         <div>
-            <h2>Vendas por Produto</h2>
+            <h2>Vendas por Produto (Tabela)</h2>
             <table id="tabelaVendas">
                 <thead><tr><th>Produto</th><th>Vendas</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
         <div>
-            <h2>Estoque por Produto</h2>
+            <h2>Estoque por Produto (Tabela)</h2>
             <table id="tabelaEstoque">
                 <thead><tr><th>Produto</th><th>Estoque</th></tr></thead>
                 <tbody></tbody>
             </table>
+        </div>
+        <div>
+            <h2>Série Temporal Vendas (Últimas)</h2>
+            <canvas id="chartVendas" height="180"></canvas>
+        </div>
+        <div>
+            <h2>Série Temporal Estoque (Últimas)</h2>
+            <canvas id="chartEstoque" height="180"></canvas>
         </div>
     </section>
 </main>
@@ -49,6 +57,7 @@
 <footer>
     <small>Atualizado em: <span id="atualizadoEm">--</span></small>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-1EuiH730cdpShUMpOWcZH/5LiCFYI8aAkaI0s5momkGumZ+UpBAkLTlaX2UjsFvZ" crossorigin="anonymous"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>
