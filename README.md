@@ -89,6 +89,16 @@ python update_simulator.py
 ```
 Cancelamento: Ctrl+C.
 
+## Gerar Massa de Dados (intervalos fixos)
+Gera série sintética (padrão: últimos 30 min em passos de 5 min) e sobrescreve `app/sample_data.csv`:
+```
+python generate_batch_data.py
+```
+Personalizar:
+```
+python generate_batch_data.py --duracao-min 60 --intervalo-min 5 --produtos "Produto A,Produto B" --estoque-inicial 120 --seed 42
+```
+
 ## Personalização do CSV
 Mantenha cabeçalho com colunas mínimas: `timestamp,produto,vendas,estoque`.
 
