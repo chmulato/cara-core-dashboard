@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Callable
 import pandas as pd
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,13 +36,13 @@ class DataManager:
     def __init__(self, csv_path: Path, refresh_interval: float = 5.0):
         self.csv_path = csv_path
         self.refresh_interval = refresh_interval
-        self._last_mtime: float = 0.0
+        self._last_mtime = 0.0
         self._lock = threading.RLock()
-        self._data: Dict[str, Any] = {}
-        self._subscribers: List[Callable[[Dict[str, Any]], None]] = []
+        self._data = {}
+        self._subscribers = []  # type: list[Callable[[dict[str, Any]], None]]
         self._stop_event = threading.Event()
-        self._thread: threading.Thread | None = None
-        self._observer: Observer | None = None
+        self._thread = None  # type: ignore
+        self._observer = None  # type: ignore
 
     def start(self):
         self._load_if_changed(force=True)
@@ -145,10 +146,18 @@ class DataManager:
             with self._lock:
                 self._data = snapshot
                 self._last_mtime = mtime
-            logger.info("Snapshot atualizado (%d linhas)", len(df))
+            logger.info(
+                "snapshot_update",
+                extra={
+                    "linhas": len(df),
+                    "total_vendas": total_vendas,
+                    "produtos": len(estoque_por_produto),
+                    "ultimo_timestamp": ultimo_timestamp,
+                },
+            )
             self._notify()
-        except Exception as e:
-            logger.error("Erro ao carregar CSV: %s", e)
+        except Exception:
+            logger.exception("csv_load_error")
 
 
 __all__ = ["DataManager"]

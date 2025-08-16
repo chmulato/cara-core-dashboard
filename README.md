@@ -36,6 +36,11 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
+### Variáveis de Ambiente (Logging)
+```
+$env:LOG_LEVEL="DEBUG"; $env:LOG_FORMAT="plain"; uvicorn app.main:app --reload --port 8000
+```
+LOG_LEVEL (INFO padrão), LOG_FORMAT (json/plain), LOG_DIR (pasta logs).
 
 ## Execução
 ```

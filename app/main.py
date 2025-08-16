@@ -3,12 +3,14 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import logging
+import time
 from pathlib import Path
 import asyncio
 from app.data_loader import DataManager
+from app.logging_setup import configure_logging
 import pandas as pd
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+configure_logging()
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -31,6 +33,7 @@ class WSConnectionManager:
         await websocket.accept()
         async with self._lock:
             self.active.append(websocket)
+        logging.getLogger("ws").info("ws_connected", extra={"total_active": len(self.active), "client": str(websocket.client)})
         # Envia snapshot inicial
         await self.send_personal(websocket, data_manager.get_snapshot())
 
@@ -38,6 +41,7 @@ class WSConnectionManager:
         async with self._lock:
             if websocket in self.active:
                 self.active.remove(websocket)
+        logging.getLogger("ws").info("ws_disconnected", extra={"total_active": len(self.active), "client": str(websocket.client)})
 
     async def broadcast(self, data):
         dead = []
@@ -87,7 +91,9 @@ async def index(request: Request):
 
 @app.get('/api/data')
 async def api_data():
-    return data_manager.get_snapshot()
+    snapshot = data_manager.get_snapshot()
+    logging.getLogger("api").debug("snapshot_served", extra={"linhas": snapshot.get('linhas'), "total_vendas": snapshot.get('total_vendas')})
+    return snapshot
 
 
 @app.get('/api/historico')
@@ -123,3 +129,24 @@ async def websocket_endpoint(websocket: WebSocket):
         await ws_manager.disconnect(websocket)
     except Exception:
         await ws_manager.disconnect(websocket)
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.perf_counter()
+    response = None
+    try:
+        response = await call_next(request)
+        return response
+    finally:
+        duration_ms = (time.perf_counter() - start) * 1000
+        logging.getLogger("http").info(
+            "request",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "query": str(request.url.query)[:200],
+                "status_code": getattr(response, 'status_code', None),
+                "duration_ms": round(duration_ms, 2),
+                "client": request.client.host if request.client else None,
+            },
+        )
