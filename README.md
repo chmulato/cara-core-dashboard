@@ -1,5 +1,11 @@
 # Dashboard de Vendas & Estoque (Tempo Real)
 
+<p align="center">
+  <img src="article_43/media/article_43_03.png" alt="Dashboard de Vendas & Estoque em execução: gráfico pizza destacado, gráficos de linha e tabelas laterais" width="820" style="max-width:100%; border-radius:12px; box-shadow:0 4px 18px -4px rgba(0,0,0,0.25);" />
+  <br>
+  <em>Interface do dashboard em execução local (Chart.js v4.4.1)</em>
+</p>
+
 Este projeto fornece um sistema completo de dashboard web em Python (FastAPI) que monitora dados de um arquivo CSV exportado do Excel e atualiza a interface em tempo real usando WebSockets com fallback inteligente para polling. O dashboard apresenta layout responsivo profissional com foco em visualização de dados usando Chart.js v4.4.1.
 
 ## Início Rápido
