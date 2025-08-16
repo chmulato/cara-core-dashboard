@@ -1,7 +1,8 @@
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
-pandas==2.2.2
 watchdog==4.0.1
 jinja2==3.1.4
 python-json-logger==2.0.7
-python-json-logger==2.0.7
+
+# pandas removido para facilitar instalação em Python 3.13 (sem wheels). Opcional:
+# pip install pandas==2.2.2  (recomenda-se usar Python 3.12 para ter wheels prontos)

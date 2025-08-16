@@ -16,6 +16,7 @@ function updateSnapshot(snap){
   $("atualizadoEm").textContent = snap.atualizado_em ?? '--';
   renderTable("tabelaVendas", snap.vendas_por_produto, 'Vendas');
   renderTable("tabelaEstoque", snap.estoque_por_produto, 'Estoque');
+  buildPieChart(snap.vendas_por_produto);
   // charts atualizados separadamente
 }
 
@@ -106,17 +107,43 @@ async function loadHistorico(){
 function ensureChart(id, label, yTitle){
   if(state.charts[id]) return state.charts[id];
   const ctx = document.getElementById(id).getContext('2d');
-  state.charts[id] = new Chart(ctx, {
-    type: 'line',
-    data: { labels: [], datasets: [] },
-    options: {
-      responsive: true,
-      animation: false,
-      interaction: { intersect: false, mode: 'index' },
-      plugins: { legend: { position: 'bottom' } },
-      scales: { y: { title: { display: true, text: yTitle } }, x: { ticks: { maxRotation: 45, minRotation: 0 } } }
-    }
-  });
+  
+  if(id === 'chartPizza'){
+    state.charts[id] = new Chart(ctx, {
+      type: 'pie',
+      data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+      options: {
+        responsive: true,
+        animation: false,
+        plugins: { 
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  } else {
+    state.charts[id] = new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [] },
+      options: {
+        responsive: true,
+        animation: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { title: { display: true, text: yTitle } }, x: { ticks: { maxRotation: 45, minRotation: 0 } } }
+      }
+    });
+  }
   return state.charts[id];
 }
 
@@ -154,4 +181,25 @@ function buildCharts(rows){
   chartE.data.datasets = Object.entries(estoqueSeries).map(([p,data]) => ({ label: p, data, tension: 0.2 }));
   chartV.update();
   chartE.update();
+}
+
+function buildPieChart(vendas_por_produto){
+  if(!vendas_por_produto || Object.keys(vendas_por_produto).length === 0) return;
+  
+  const chartPie = ensureChart('chartPizza', 'Distribuição de Vendas', '');
+  
+  const entries = Object.entries(vendas_por_produto);
+  const labels = entries.map(([produto]) => produto);
+  const data = entries.map(([, vendas]) => vendas);
+  
+  // Cores vibrantes para cada fatia
+  const colors = [
+    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+    '#FF9F40', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'
+  ];
+  
+  chartPie.data.labels = labels;
+  chartPie.data.datasets[0].data = data;
+  chartPie.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+  chartPie.update();
 }

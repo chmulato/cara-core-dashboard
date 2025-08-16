@@ -2,7 +2,10 @@ import threading
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Callable
-import pandas as pd
+try:
+    import pandas as pd  # type: ignore
+except Exception:  # pandas opcional
+    pd = None  # type: ignore
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from typing import Optional
@@ -102,44 +105,89 @@ class DataManager:
             if not force and mtime <= self._last_mtime:
                 return
             # Evitar leitura durante escrita: tentar múltiplas vezes
-            for attempt in range(5):
-                try:
-                    df = pd.read_csv(self.csv_path)
-                    break
-                except Exception:
-                    time.sleep(0.2)
+            if pd:
+                for attempt in range(5):
+                    try:
+                        df = pd.read_csv(self.csv_path)
+                        break
+                    except Exception:
+                        time.sleep(0.2)
+                else:
+                    logger.error("Falha ao ler CSV após várias tentativas")
+                    return
+                if df.empty:
+                    return
+                expected = {"timestamp", "produto", "vendas", "estoque"}
+                missing = expected - set(df.columns)
+                if missing:
+                    logger.warning("Colunas ausentes no CSV: %s", missing)
+                if 'timestamp' in df.columns:
+                    try:
+                        df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    except Exception:
+                        pass
+                total_vendas = df['vendas'].sum() if 'vendas' in df.columns else None
+                estoque_por_produto = (
+                    df.groupby('produto')['estoque'].last().to_dict() if 'produto' in df.columns and 'estoque' in df.columns else {}
+                )
+                vendas_por_produto = (
+                    df.groupby('produto')['vendas'].sum().to_dict() if 'produto' in df.columns and 'vendas' in df.columns else {}
+                )
+                ultimo_timestamp = (
+                    df['timestamp'].max().isoformat() if 'timestamp' in df.columns and not df['timestamp'].isna().all() else None
+                )
             else:
-                logger.error("Falha ao ler CSV após várias tentativas")
-                return
-            if df.empty:
-                return
-            # Normalizar colunas esperadas
-            expected = {"timestamp", "produto", "vendas", "estoque"}
-            missing = expected - set(df.columns)
-            if missing:
-                logger.warning("Colunas ausentes no CSV: %s", missing)
-            # Conversões
-            if 'timestamp' in df.columns:
-                try:
-                    df['timestamp'] = pd.to_datetime(df['timestamp'])
-                except Exception:
-                    pass
-            # Agregações simples
-            total_vendas = df['vendas'].sum() if 'vendas' in df.columns else None
-            estoque_por_produto = (
-                df.groupby('produto')['estoque'].last().to_dict() if 'produto' in df.columns and 'estoque' in df.columns else {}
-            )
-            vendas_por_produto = (
-                df.groupby('produto')['vendas'].sum().to_dict() if 'produto' in df.columns and 'vendas' in df.columns else {}
-            )
-            ultimo_timestamp = (
-                df['timestamp'].max().isoformat() if 'timestamp' in df.columns and not df['timestamp'].isna().all() else None
-            )
+                # Fallback sem pandas (leitura simples e agregação manual)
+                import csv
+                rows = []
+                with open(self.csv_path, newline='', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for r in reader:
+                        rows.append(r)
+                if not rows:
+                    return
+                total_vendas = 0
+                estoque_por_produto = {}
+                vendas_por_produto = {}
+                ultimo_timestamp = None
+                for r in rows:
+                    try:
+                        vendas = int(r.get('vendas', 0) or 0)
+                    except ValueError:
+                        vendas = 0
+                    try:
+                        estoque = int(r.get('estoque', 0) or 0)
+                    except ValueError:
+                        estoque = 0
+                    produto = r.get('produto') or 'N/A'
+                    total_vendas += vendas
+                    vendas_por_produto[produto] = vendas_por_produto.get(produto, 0) + vendas
+                    # Último estoque prevalece
+                    estoque_por_produto[produto] = estoque
+                    ts = r.get('timestamp')
+                    if ts:
+                        ultimo_timestamp = ts  # último encontrado
+            linhas = len(df) if pd else len(rows)  # type: ignore
+            
+            # Conversão de tipos numpy/pandas para JSON-serializáveis
+            def make_json_safe(obj):
+                """Converte tipos numpy/pandas para tipos nativos Python"""
+                if hasattr(obj, 'item'):  # numpy scalar
+                    return obj.item()
+                elif hasattr(obj, 'isoformat'):  # datetime/timestamp
+                    return obj.isoformat()
+                elif isinstance(obj, dict):
+                    return {k: make_json_safe(v) for k, v in obj.items()}
+                elif isinstance(obj, (list, tuple)):
+                    return [make_json_safe(item) for item in obj]
+                else:
+                    return obj
+            
             snapshot = {
-                'total_vendas': total_vendas,
-                'estoque_por_produto': estoque_por_produto,
-                'vendas_por_produto': vendas_por_produto,
-                'linhas': len(df),
+                'total_vendas': make_json_safe(total_vendas),
+                'estoque_por_produto': make_json_safe(estoque_por_produto),
+                'vendas_por_produto': make_json_safe(vendas_por_produto),
+                'linhas': int(linhas),
                 'ultimo_timestamp': ultimo_timestamp,
                 'atualizado_em': time.strftime('%Y-%m-%dT%H:%M:%S'),
             }
@@ -149,7 +197,7 @@ class DataManager:
             logger.info(
                 "snapshot_update",
                 extra={
-                    "linhas": len(df),
+                    "linhas": linhas,
                     "total_vendas": total_vendas,
                     "produtos": len(estoque_por_produto),
                     "ultimo_timestamp": ultimo_timestamp,

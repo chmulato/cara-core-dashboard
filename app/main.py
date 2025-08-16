@@ -8,7 +8,10 @@ from pathlib import Path
 import asyncio
 from app.data_loader import DataManager
 from app.logging_setup import configure_logging
-import pandas as pd
+try:
+    import pandas as pd  # type: ignore
+except Exception:
+    pd = None  # type: ignore
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -98,21 +101,49 @@ async def api_data():
 
 @app.get('/api/historico')
 async def api_historico(limit: int = Query(100, ge=1, le=1000)):
-    """Retorna as últimas linhas (raw) do CSV para gráficos históricos."""
+    """Retorna as últimas linhas (raw) do CSV para gráficos históricos.
+    Funciona com pandas (se disponível) ou fallback csv puro.
+    """
     if not CSV_PATH.exists():
         return []
     try:
-        df = pd.read_csv(CSV_PATH)
-        if df.empty:
-            return []
-        if 'timestamp' in df.columns:
-            try:
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-                df = df.sort_values('timestamp')
-            except Exception:
-                pass
-        df = df.tail(limit)
-        return JSONResponse(df.to_dict(orient='records'))
+        def make_json_safe(obj):
+            """Converte tipos numpy/pandas para tipos nativos Python"""
+            if hasattr(obj, 'item'):  # numpy scalar
+                return obj.item()
+            elif hasattr(obj, 'isoformat'):  # datetime/timestamp
+                return obj.isoformat()
+            elif isinstance(obj, dict):
+                return {k: make_json_safe(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return [make_json_safe(item) for item in obj]
+            else:
+                return obj
+
+        if pd:
+            df = pd.read_csv(CSV_PATH)
+            if df.empty:
+                return []
+            if 'timestamp' in df.columns:
+                try:
+                    df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    df = df.sort_values('timestamp')
+                except Exception:
+                    pass
+            df = df.tail(limit)
+            records = df.to_dict(orient='records')
+            return JSONResponse([make_json_safe(record) for record in records])
+        else:
+            import csv
+            rows = []
+            with open(CSV_PATH, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for r in reader:
+                    rows.append(r)
+            if not rows:
+                return []
+            rows = rows[-limit:]
+            return JSONResponse(rows)
     except Exception as e:
         logger.error("Erro ao ler historico: %s", e)
         return JSONResponse([], status_code=500)
