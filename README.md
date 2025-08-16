@@ -43,15 +43,15 @@ Acesse http://localhost:8000 (ou porta indicada no terminal se 8000 estiver ocup
 ```
 ├── main.py                     # Ponto de entrada principal (com detecção de porta)
 ├── app/                        # Aplicação web
-│   ├── main.py                #    FastAPI app com WebSocket
-│   ├── data_loader.py         #    Gerencia leitura e difusão dos dados
-│   ├── logging_setup.py       #    Configuração de logging estruturado
-│   ├── sample_data.csv        #    Dados de exemplo (125 registros)
-│   ├── templates/             #    Templates HTML
-│   │   └── index.html         #    Interface com layout dashboard-layout
-│   └── static/                #    Arquivos estáticos
-│       ├── app_complete.js    #    JavaScript com Chart.js integrado
-│       └── styles.css         #    CSS responsivo com Grid layout
+│   ├── main.py                 # FastAPI app com WebSocket
+│   ├── data_loader.py          # Gerencia leitura e difusão dos dados
+│   ├── logging_setup.py        # Configuração de logging estruturado
+│   ├── sample_data.csv         # Dados de exemplo (125 registros)
+│   ├── templates/              # Templates HTML
+│   │   └── index.html          # Interface com layout dashboard-layout
+│   └── static/                 # Arquivos estáticos
+│       ├── app_complete.js     # JavaScript com Chart.js integrado
+│       └── styles.css          # CSS responsivo com Grid layout
 ├── src/                        # Scripts utilitários
 │   ├── generate_batch_data.py  # Gera massa de dados
 │   ├── update_simulator.py     # Simula atualizações em tempo real
